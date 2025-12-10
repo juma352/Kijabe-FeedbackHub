@@ -30,6 +30,11 @@
                     <x-nav-link :href="route('feedback.learner.experience')" :active="request()->routeIs('feedback.learner.experience')">
                         {{ __('Learner Experience') }}
                     </x-nav-link>
+                    @can('manage_users')
+                        <x-nav-link :href="route('departments.index')" :active="request()->routeIs('departments.index')">
+                            {{ __('Department Emails') }}
+                        </x-nav-link>
+                    @endcan
                 </div>
             </div>
 
@@ -97,6 +102,11 @@
             <x-responsive-nav-link :href="route('feedback.kijabe.analytics')" :active="request()->routeIs('feedback.kijabe.analytics')">
                 {{ __('Hospital Analytics') }}
             </x-responsive-nav-link>
+            @can('manage_users')
+                <x-responsive-nav-link :href="route('departments.index')" :active="request()->routeIs('departments.index')">
+                    {{ __('Department Emails') }}
+                </x-responsive-nav-link>
+            @endcan
         </div>
 
         <!-- Responsive Settings Options -->

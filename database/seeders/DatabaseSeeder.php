@@ -44,5 +44,8 @@ class DatabaseSeeder extends Seeder
 
         // Seed feedback data
         $this->call(FeedbackSeeder::class);
+        
+        // Seed action-required feedback data
+        $this->call(ActionRequiredFeedbackSeeder::class);
     }
 }

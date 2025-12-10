@@ -75,6 +75,10 @@ Route::middleware('auth')->group(function () {
         Route::get('users-management', [RoleController::class, 'manageUsers'])->name('users.management');
         Route::post('users/create', [RoleController::class, 'createUser'])->name('users.create');
         Route::put('users/{user}/role', [RoleController::class, 'updateUserRole'])->name('users.update.role');
+        
+        // Department management
+        Route::get('departments', [\App\Http\Controllers\DepartmentHeadController::class, 'index'])->name('departments.index');
+        Route::put('departments/{departmentHead}', [\App\Http\Controllers\DepartmentHeadController::class, 'update'])->name('departments.update');
     });
 });
 

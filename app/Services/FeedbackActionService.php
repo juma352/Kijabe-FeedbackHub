@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Feedback;
+use App\Models\DepartmentHead;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 
@@ -21,8 +22,8 @@ class FeedbackActionService
             return ['success' => false, 'message' => 'No feedback items found requiring action'];
         }
 
-        // Get department emails
-        $emails = Feedback::getDepartmentEmails($departments);
+        // Get department emails from department heads table
+        $emails = $this->getDepartmentEmails($departments);
         
         if (empty($emails)) {
             return ['success' => false, 'message' => 'No email addresses found for selected departments'];
@@ -66,7 +67,7 @@ class FeedbackActionService
 
             return [
                 'success' => true,
-                'message' => 'Notifications sent successfully',
+                'message' => 'Notifications sent successfully to ' . count($sentEmails) . ' recipient(s)',
                 'sentTo' => $sentEmails,
                 'failed' => $failedEmails,
                 'feedbackCount' => $feedbacks->count(),
@@ -78,6 +79,26 @@ class FeedbackActionService
                 'success' => false,
                 'message' => 'Failed to send notifications: ' . $e->getMessage()
             ];
+        }
+    }
+
+    /**
+     * Get email addresses for departments from department_heads table
+     */
+    private function getDepartmentEmails(array $departments): array
+    {
+        $emails = [];
+        
+        foreach ($departments as $departmentKey) {
+            $departmentHead = DepartmentHead::getByDepartment($departmentKey);
+            
+            if ($departmentHead) {
+                $emails = array_merge($emails, $departmentHead->getAllEmails());
+            }
+        }
+        
+        return array_unique(array_filter($emails));
+    }
         }
     }
 

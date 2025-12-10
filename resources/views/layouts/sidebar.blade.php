@@ -99,6 +99,14 @@
             </li>
 
             <li>
+                <a href="{{ route('departments.index') }}" 
+                   class="flex items-center px-4 py-3 rounded-lg transition-colors duration-200 {{ request()->routeIs('departments.*') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white' }}">
+                    <i class="fas fa-building w-5 mr-3"></i>
+                    <span>Departments</span>
+                </a>
+            </li>
+
+            <li>
                 <a href="{{ route('users.management') }}" 
                    class="flex items-center px-4 py-3 rounded-lg transition-colors duration-200 {{ request()->routeIs('users.management') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white' }}">
                     <i class="fas fa-users w-5 mr-3"></i>
@@ -254,6 +262,14 @@
                            class="flex items-center px-4 py-3 rounded-lg transition-colors duration-200 {{ request()->get('show') === 'all' ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white' }}">
                             <i class="fas fa-globe w-5 mr-3"></i>
                             <span>All Forms</span>
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="{{ route('departments.index') }}" @click="open = false"
+                           class="flex items-center px-4 py-3 rounded-lg transition-colors duration-200 {{ request()->routeIs('departments.*') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white' }}">
+                            <i class="fas fa-building w-5 mr-3"></i>
+                            <span>Departments</span>
                         </a>
                     </li>
 

@@ -327,56 +327,19 @@
 
 @section('scripts')
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const feedbackCheckboxes = document.querySelectorAll('.feedback-checkbox');
-    const selectAllCheckbox = document.getElementById('select-all');
-    const headerCheckbox = document.getElementById('header-checkbox');
+// Wait for the entire page to load including images/assets
+window.addEventListener('load', function() {
+    console.log('Window fully loaded - initializing checkboxes');
+    
     const bulkActionBtn = document.getElementById('bulk-action-btn');
     const requireActionBtn = document.getElementById('require-action-btn');
     const selectionCount = document.getElementById('selection-count');
-    const bulkActionModal = document.getElementById('bulk-action-modal');
-    const closeBulkModal = document.getElementById('close-modal');
-    const cancelBulkAction = document.getElementById('cancel-bulk-action');
-
-    // Handle individual checkbox changes
-    function attachCheckboxListeners() {
-        document.querySelectorAll('.feedback-checkbox').forEach(checkbox => {
-            checkbox.addEventListener('change', updateSelectionState);
-        });
-    }
-
-    // Handle select all
-    if (selectAllCheckbox) {
-        selectAllCheckbox.addEventListener('change', function() {
-            const isChecked = this.checked;
-            document.querySelectorAll('.feedback-checkbox').forEach(cb => {
-                cb.checked = isChecked;
-            });
-            if (headerCheckbox) {
-                headerCheckbox.checked = isChecked;
-            }
-            updateSelectionState();
-        });
-    }
-
-    if (headerCheckbox) {
-        headerCheckbox.addEventListener('change', function() {
-            const isChecked = this.checked;
-            document.querySelectorAll('.feedback-checkbox').forEach(cb => {
-                cb.checked = isChecked;
-            });
-            if (selectAllCheckbox) {
-                selectAllCheckbox.checked = isChecked;
-            }
-            updateSelectionState();
-        });
-    }
-
+    
     function updateSelectionState() {
-        const feedbackCheckboxes = document.querySelectorAll('.feedback-checkbox');
         const checkedBoxes = document.querySelectorAll('.feedback-checkbox:checked');
         const count = checkedBoxes.length;
-        const totalCount = feedbackCheckboxes.length;
+        
+        console.log('Checked boxes:', count);
         
         if (selectionCount) {
             selectionCount.textContent = `${count} selected`;
@@ -389,171 +352,60 @@ document.addEventListener('DOMContentLoaded', function() {
         if (requireActionBtn) {
             requireActionBtn.disabled = count === 0;
         }
-        
-        // Update select all checkboxes
-        const allChecked = count === totalCount && totalCount > 0;
-        const someChecked = count > 0;
-        
-        if (selectAllCheckbox) {
-            selectAllCheckbox.checked = allChecked;
-            selectAllCheckbox.indeterminate = someChecked && !allChecked;
-        }
-        
-        if (headerCheckbox) {
-            headerCheckbox.checked = allChecked;
-            headerCheckbox.indeterminate = someChecked && !allChecked;
-        }
     }
-
-    // Initialize checkbox listeners
-    attachCheckboxListeners();
-
-    // Removed sentiment editing - will be handled on edit page
-
-    // Handle bulk notifications
-    bulkActionBtn.addEventListener('click', function() {
-        bulkActionModal.classList.remove('hidden');
-    });
-
-    [closeBulkModal, cancelBulkAction].forEach(btn => {
-        btn.addEventListener('click', function() {
-            bulkActionModal.classList.add('hidden');
-        });
-    });
-
-    // Handle bulk notification form submission
-    document.getElementById('bulk-notification-form').addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        const checkedFeedback = Array.from(document.querySelectorAll('.feedback-checkbox:checked'))
-            .map(cb => cb.value);
-        const selectedDepartments = Array.from(document.querySelectorAll('input[name="departments[]"]:checked'))
-            .map(cb => cb.value);
-        const customMessage = document.querySelector('textarea[name="custom_message"]').value;
-
-        if (selectedDepartments.length === 0) {
-            showNotification('Please select at least one department', 'error');
-            return;
-        }
-
-        fetch('/feedback/bulk-notifications', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-            },
-            body: JSON.stringify({
-                feedback_ids: checkedFeedback,
-                departments: selectedDepartments,
-                custom_message: customMessage
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.message) {
-                showNotification(data.message, 'success');
-                bulkActionModal.classList.add('hidden');
-                
-                // Optionally refresh the page or update the UI
-                setTimeout(() => {
-                    location.reload();
-                }, 1500);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showNotification('Failed to send notifications', 'error');
-        });
-    });
-
-    // Handle suggest departments
-    document.querySelectorAll('.suggest-departments-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const feedbackId = this.getAttribute('data-feedback-id');
-            suggestDepartments(feedbackId, this);
-        });
-    });
-
-    function suggestDepartments(feedbackId, buttonElement) {
-        fetch(`/feedback/${feedbackId}/suggest-departments`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.suggested_departments && data.suggested_departments.length > 0) {
-                const container = buttonElement.parentElement;
-                container.innerHTML = '';
-                
-                const wrapper = document.createElement('div');
-                wrapper.className = 'flex flex-wrap gap-1';
-                
-                data.suggested_departments.forEach(dept => {
-                    const span = document.createElement('span');
-                    span.className = 'inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800';
-                    span.textContent = dept.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
-                    wrapper.appendChild(span);
-                });
-                
-                container.appendChild(wrapper);
-                
-                showNotification(`Suggested departments: ${data.suggested_departments.join(', ')}`, 'success');
-            } else {
-                showNotification('No department suggestions found', 'info');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showNotification('Failed to get department suggestions', 'error');
-        });
-    }
-
-    function showNotification(message, type) {
-        // Simple notification system - you can replace with a more sophisticated one
-        const notification = document.createElement('div');
-        notification.className = `fixed top-4 right-4 p-4 rounded-md text-white z-50 ${
-            type === 'success' ? 'bg-green-500' : 
-            type === 'error' ? 'bg-red-500' : 
-            type === 'info' ? 'bg-blue-500' : 'bg-gray-500'
-        }`;
-        notification.textContent = message;
-        
-        document.body.appendChild(notification);
-        
-        setTimeout(() => {
-            notification.remove();
-        }, 3000);
-    }
-
-    // Handle require action button
-    requireActionBtn.addEventListener('click', function() {
-        const checkedFeedback = Array.from(document.querySelectorAll('.feedback-checkbox:checked'))
-            .map(cb => cb.value);
-        
-        if (checkedFeedback.length === 0) {
-            showNotification('Please select at least one feedback item', 'error');
-            return;
-        }
-
-        // Show department selection modal for require action
-        const modal = document.getElementById('require-action-modal');
-        document.getElementById('require-action-feedback-ids').value = JSON.stringify(checkedFeedback);
-        modal.classList.remove('hidden');
-    });
-
-    const closeRequireActionModal = document.getElementById('close-require-action-modal');
-    const cancelRequireAction = document.getElementById('cancel-require-action');
     
-    if (closeRequireActionModal) {
-        closeRequireActionModal.addEventListener('click', function() {
-            document.getElementById('require-action-modal').classList.add('hidden');
+    // Attach change listeners to all checkboxes
+    document.querySelectorAll('.feedback-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', updateSelectionState);
+    });
+    
+    // Bulk action button
+    if (bulkActionBtn) {
+        bulkActionBtn.addEventListener('click', function() {
+            const modal = document.getElementById('bulk-action-modal');
+            if (modal) modal.classList.remove('hidden');
         });
     }
     
-    if (cancelRequireAction) {
-        cancelRequireAction.addEventListener('click', function() {
-            document.getElementById('require-action-modal').classList.add('hidden');
+    // Require Action button
+    if (requireActionBtn) {
+        requireActionBtn.addEventListener('click', function() {
+            const checkedFeedback = Array.from(document.querySelectorAll('.feedback-checkbox:checked'))
+                .map(cb => cb.value);
+            
+            if (checkedFeedback.length === 0) {
+                alert('Please select at least one feedback item');
+                return;
+            }
+            
+            const modal = document.getElementById('require-action-modal');
+            if (modal) {
+                document.getElementById('require-action-feedback-ids').value = JSON.stringify(checkedFeedback);
+                modal.classList.remove('hidden');
+            }
         });
     }
-
-    // Handle require action form submission
+    
+    // Modal close handlers
+    ['close-require-action-modal', 'cancel-require-action'].forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) {
+            btn.addEventListener('click', () => {
+                document.getElementById('require-action-modal').classList.add('hidden');
+            });
+        }
+    });
+    
+    ['close-modal', 'cancel-bulk-action'].forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) {
+            btn.addEventListener('click', () => {
+                document.getElementById('bulk-action-modal').classList.add('hidden');
+            });
+        }
+    });
+    
+    // Require action form
     const requireActionForm = document.getElementById('require-action-form');
     if (requireActionForm) {
         requireActionForm.addEventListener('submit', function(e) {
@@ -562,13 +414,12 @@ document.addEventListener('DOMContentLoaded', function() {
             const feedbackIds = JSON.parse(document.getElementById('require-action-feedback-ids').value);
             const selectedDepartments = Array.from(document.querySelectorAll('input[name="require-action-departments[]"]:checked'))
                 .map(cb => cb.value);
-            const notes = document.querySelector('textarea[name="require-action-notes"]').value;
-
+            
             if (selectedDepartments.length === 0) {
-                showNotification('Please select at least one department', 'error');
+                alert('Please select at least one department');
                 return;
             }
-
+            
             fetch('/feedback/require-action', {
                 method: 'POST',
                 headers: {
@@ -578,31 +429,57 @@ document.addEventListener('DOMContentLoaded', function() {
                 body: JSON.stringify({
                     feedback_ids: feedbackIds,
                     departments: selectedDepartments,
-                    notes: notes
+                    notes: document.querySelector('textarea[name="require-action-notes"]').value
                 })
             })
-            .then(response => response.json())
+            .then(r => r.json())
             .then(data => {
-                if (data.message) {
-                    showNotification(data.message, 'success');
-                    document.getElementById('require-action-modal').classList.add('hidden');
-                    
-                    // Optionally refresh the page or update the UI
-                    setTimeout(() => {
-                        location.reload();
-                    }, 1500);
-                }
+                alert(data.message);
+                location.reload();
             })
-            .catch(error => {
-                console.error('Error:', error);
-                showNotification('Failed to mark items as requiring action', 'error');
-            });
+            .catch(e => alert('Error: ' + e));
         });
     }
-
-    // Initialize
+    
+    // Bulk notifications form
+    const bulkForm = document.getElementById('bulk-notification-form');
+    if (bulkForm) {
+        bulkForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const checkedFeedback = Array.from(document.querySelectorAll('.feedback-checkbox:checked'))
+                .map(cb => cb.value);
+            const selectedDepartments = Array.from(document.querySelectorAll('input[name="departments[]"]:checked'))
+                .map(cb => cb.value);
+            
+            if (selectedDepartments.length === 0) {
+                alert('Please select at least one department');
+                return;
+            }
+            
+            fetch('/feedback/bulk-notifications', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify({
+                    feedback_ids: checkedFeedback,
+                    departments: selectedDepartments,
+                    custom_message: document.querySelector('textarea[name="custom_message"]').value
+                })
+            })
+            .then(r => r.json())
+            .then(data => {
+                alert(data.message);
+                location.reload();
+            })
+            .catch(e => alert('Error: ' + e));
+        });
+    }
+    
+    console.log('Setup complete');
     updateSelectionState();
-    attachCheckboxListeners();
 });
 </script>
 @endsection
