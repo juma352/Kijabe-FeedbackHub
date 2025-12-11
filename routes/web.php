@@ -40,7 +40,6 @@ Route::middleware('auth')->group(function () {
     Route::post('feedback-dynamic-import', [FeedbackController::class, 'processDynamicImport'])->name('feedback.dynamic.import.process');
     Route::post('feedback-bulk-analyze', [FeedbackController::class, 'bulkAnalyze'])->name('feedback.bulk.analyze');
     Route::post('feedback-bulk-learner-experience', [FeedbackController::class, 'bulkCalculateLearnerExperience'])->name('feedback.bulk.learner.experience');
-    Route::get('kijabe-analytics', [FeedbackController::class, 'kijabeAnalytics'])->name('feedback.kijabe.analytics');
     Route::get('learner-experience', [FeedbackController::class, 'learnerExperienceAnalytics'])->name('feedback.learner.experience');
     Route::get('sample-csv', function () {
         $filePath = storage_path('app/sample_feedback.csv');
@@ -51,9 +50,12 @@ Route::middleware('auth')->group(function () {
     Route::get('feedback-management', [FeedbackController::class, 'management'])->name('feedback.management');
     Route::put('feedback/{feedback}/sentiment', [FeedbackController::class, 'updateSentiment'])->name('feedback.update.sentiment');
     Route::post('feedback/require-action', [FeedbackController::class, 'requireAction'])->name('feedback.require.action');
+    Route::post('feedback/bulk-notifications-preview', [FeedbackController::class, 'previewBulkNotifications'])->name('feedback.bulk.notifications.preview');
     Route::post('feedback/bulk-notifications', [FeedbackController::class, 'sendBulkNotifications'])->name('feedback.bulk.notifications');
     Route::get('feedback/{feedback}/suggest-departments', [FeedbackController::class, 'suggestDepartments'])->name('feedback.suggest.departments');
     Route::get('feedback/action-report', [FeedbackController::class, 'getActionReport'])->name('feedback.action.report');
+    Route::get('feedback/{feedback}/resolution-time', [FeedbackController::class, 'getResolutionTime'])->name('feedback.resolution.time');
+    Route::post('feedback/{feedback}/mark-resolved', [FeedbackController::class, 'markAsResolved'])->name('feedback.mark.resolved');
     
     // Form Builder Routes (authenticated users)
     Route::resource('forms', FormController::class);
@@ -78,6 +80,7 @@ Route::middleware('auth')->group(function () {
         
         // Department management
         Route::get('departments', [\App\Http\Controllers\DepartmentHeadController::class, 'index'])->name('departments.index');
+        Route::post('departments', [\App\Http\Controllers\DepartmentHeadController::class, 'store'])->name('departments.store');
         Route::put('departments/{departmentHead}', [\App\Http\Controllers\DepartmentHeadController::class, 'update'])->name('departments.update');
     });
 });

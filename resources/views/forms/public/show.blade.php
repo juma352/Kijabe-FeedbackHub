@@ -183,17 +183,30 @@
                                                     @break
 
                                                 @case('rating')
-                                                    <div class="flex items-center space-x-2" data-rating-field="{{ $field['key'] }}">
-                                                        <input type="hidden" name="{{ $field['key'] }}" id="{{ $field['key'] }}_input" {{ ($field['required'] ?? false) ? 'required' : '' }}>
-                                                        @for($i = 1; $i <= ($field['maxRating'] ?? 5); $i++)
-                                                            <button type="button" 
-                                                                    class="rating-star text-2xl text-gray-300 hover:text-yellow-400 focus:outline-none transition-colors duration-200" 
-                                                                    data-rating="{{ $i }}"
-                                                                    data-field="{{ $field['key'] }}">
-                                                                <i class="fas fa-star"></i>
-                                                            </button>
-                                                        @endfor
-                                                        <span class="ml-3 text-sm text-gray-600" id="{{ $field['key'] }}_display">Click to rate</span>
+                                                    <div>
+                                                        <div class="flex items-center space-x-2 mb-4" data-rating-field="{{ $field['key'] }}">
+                                                            <input type="hidden" name="{{ $field['key'] }}" id="{{ $field['key'] }}_input" {{ ($field['required'] ?? false) ? 'required' : '' }}>
+                                                            @for($i = 1; $i <= ($field['maxRating'] ?? 5); $i++)
+                                                                <button type="button" 
+                                                                        class="rating-star text-2xl text-gray-300 hover:text-yellow-400 focus:outline-none transition-colors duration-200 relative group" 
+                                                                        data-rating="{{ $i }}"
+                                                                        data-field="{{ $field['key'] }}"
+                                                                        title="Click to rate {{ $i }}">
+                                                                    <i class="fas fa-star"></i>
+                                                                    <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">{{ $i }}</span>
+                                                                </button>
+                                                            @endfor
+                                                            <span class="ml-4 text-lg font-semibold text-gray-700" id="{{ $field['key'] }}_display">Click to rate</span>
+                                                        </div>
+                                                        <!-- Follow-up Question -->
+                                                        <div id="{{ $field['key'] }}_followup_container" class="hidden mt-4 p-4 bg-blue-50 border-l-4 border-blue-500 rounded">
+                                                            <label class="block text-sm font-medium text-gray-700 mb-2">Why did you rate it this way? <span class="text-red-500">*</span></label>
+                                                            <textarea name="{{ $field['key'] }}_followup" 
+                                                                      id="{{ $field['key'] }}_followup"
+                                                                      rows="3"
+                                                                      placeholder="Please provide your feedback or reason for this rating..."
+                                                                      class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
+                                                        </div>
                                                     </div>
                                                     @break
 
@@ -334,12 +347,14 @@
                         const ratingField = document.querySelector(`[data-rating-field="${fieldKey}"]`);
                         const hiddenInput = document.getElementById(`${fieldKey}_input`);
                         const display = document.getElementById(`${fieldKey}_display`);
+                        const followupContainer = document.getElementById(`${fieldKey}_followup_container`);
+                        const followupTextarea = document.getElementById(`${fieldKey}_followup`);
                         
                         // Update hidden input
                         hiddenInput.value = rating;
                         
-                        // Update display
-                        display.textContent = `${rating} star${rating !== 1 ? 's' : ''}`;
+                        // Update display with both stars and number
+                        display.textContent = `${rating}/${ratingField.querySelectorAll('.rating-star').length}`;
                         
                         // Update star colors
                         const stars = ratingField.querySelectorAll('.rating-star');
@@ -352,6 +367,14 @@
                                 s.classList.add('text-gray-300');
                             }
                         });
+                        
+                        // Show follow-up question
+                        if (followupContainer) {
+                            followupContainer.classList.remove('hidden');
+                            if (followupTextarea) {
+                                followupTextarea.focus();
+                            }
+                        }
                     });
                     
                     // Hover effect

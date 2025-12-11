@@ -209,6 +209,124 @@
                 </div>
             </div>
 
+            <!-- Resolution Metrics -->
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="p-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-6">Feedback Resolution Metrics</h3>
+                    
+                    <!-- Resolution Overview Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                        <div class="bg-blue-50 rounded-lg p-4 border-l-4 border-blue-500">
+                            <div class="text-sm text-gray-600 mb-1">Total Action Required</div>
+                            <div class="text-2xl font-bold text-blue-600">{{ number_format($resolutionMetrics['total_action_required']) }}</div>
+                        </div>
+                        
+                        <div class="bg-green-50 rounded-lg p-4 border-l-4 border-green-500">
+                            <div class="text-sm text-gray-600 mb-1">Resolved</div>
+                            <div class="text-2xl font-bold text-green-600">{{ number_format($resolutionMetrics['resolved']) }}</div>
+                        </div>
+                        
+                        <div class="bg-orange-50 rounded-lg p-4 border-l-4 border-orange-500">
+                            <div class="text-sm text-gray-600 mb-1">Pending</div>
+                            <div class="text-2xl font-bold text-orange-600">{{ number_format($resolutionMetrics['pending']) }}</div>
+                        </div>
+                        
+                        <div class="bg-purple-50 rounded-lg p-4 border-l-4 border-purple-500">
+                            <div class="text-sm text-gray-600 mb-1">Resolution Rate</div>
+                            <div class="text-2xl font-bold text-purple-600">{{ number_format($resolutionMetrics['resolution_rate']) }}%</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Average Resolution Time -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h4 class="font-semibold text-gray-900 mb-2">Average Resolution Time</h4>
+                            <div class="flex items-end space-x-4">
+                                <div>
+                                    <div class="text-sm text-gray-600">Hours</div>
+                                    <div class="text-3xl font-bold text-gray-900">{{ number_format($resolutionMetrics['avg_resolution_time_hours'], 1) }}</div>
+                                </div>
+                                <div>
+                                    <div class="text-sm text-gray-600">Days</div>
+                                    <div class="text-3xl font-bold text-gray-900">{{ number_format($resolutionMetrics['avg_resolution_time_days'], 1) }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h4 class="font-semibold text-gray-900 mb-2">Recent Activity</h4>
+                            <div class="text-sm text-gray-600">Resolved in last 30 days</div>
+                            <div class="text-3xl font-bold text-gray-900">{{ number_format($resolutionMetrics['recent_resolutions']) }}</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Resolution by Sentiment -->
+                    <div class="mb-6">
+                        <h4 class="font-semibold text-gray-900 mb-3">Resolution by Sentiment</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            @foreach($resolutionMetrics['resolution_by_sentiment'] as $sentiment => $data)
+                                <div class="bg-white border rounded-lg p-4">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-sm font-medium text-gray-700 capitalize">{{ $sentiment }}</span>
+                                        <span class="text-sm font-bold {{ $sentiment === 'negative' ? 'text-red-600' : ($sentiment === 'positive' ? 'text-green-600' : 'text-gray-600') }}">
+                                            {{ $data['rate'] }}%
+                                        </span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2 mb-2">
+                                        <div class="h-2 rounded-full {{ $sentiment === 'negative' ? 'bg-red-500' : ($sentiment === 'positive' ? 'bg-green-500' : 'bg-gray-500') }}" 
+                                             style="width: {{ $data['rate'] }}%"></div>
+                                    </div>
+                                    <div class="text-xs text-gray-600">
+                                        {{ $data['resolved'] }} / {{ $data['total'] }} resolved
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                    
+                    <!-- Resolution by Department -->
+                    @if(!empty($resolutionMetrics['resolution_by_department']))
+                        <div>
+                            <h4 class="font-semibold text-gray-900 mb-3">Resolution by Department</h4>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Department</th>
+                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
+                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Resolved</th>
+                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pending</th>
+                                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rate</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        @foreach($resolutionMetrics['resolution_by_department'] as $department => $data)
+                                            <tr>
+                                                <td class="px-4 py-3 text-sm font-medium text-gray-900">{{ $department }}</td>
+                                                <td class="px-4 py-3 text-sm text-gray-600">{{ $data['total'] }}</td>
+                                                <td class="px-4 py-3 text-sm text-green-600">{{ $data['resolved'] }}</td>
+                                                <td class="px-4 py-3 text-sm text-orange-600">{{ $data['pending'] }}</td>
+                                                <td class="px-4 py-3 text-sm">
+                                                    <div class="flex items-center">
+                                                        <span class="font-semibold {{ $data['rate'] >= 75 ? 'text-green-600' : ($data['rate'] >= 50 ? 'text-yellow-600' : 'text-red-600') }}">
+                                                            {{ $data['rate'] }}%
+                                                        </span>
+                                                        <div class="ml-2 w-16 bg-gray-200 rounded-full h-1.5">
+                                                            <div class="h-1.5 rounded-full {{ $data['rate'] >= 75 ? 'bg-green-500' : ($data['rate'] >= 50 ? 'bg-yellow-500' : 'bg-red-500') }}" 
+                                                                 style="width: {{ $data['rate'] }}%"></div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    @endif
+                </div>
+            </div>
+
             <!-- Actions -->
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6">

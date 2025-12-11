@@ -99,7 +99,31 @@ class FeedbackActionService
         
         return array_unique(array_filter($emails));
     }
+
+    /**
+     * Get formatted list of notification recipients with department info
+     */
+    public function getNotificationRecipients(array $departments): array
+    {
+        $recipients = [];
+        
+        foreach ($departments as $departmentKey) {
+            $departmentHead = DepartmentHead::getByDepartment($departmentKey);
+            
+            if ($departmentHead) {
+                $emails = $departmentHead->getAllEmails();
+                $departmentName = Feedback::getAvailableDepartments()[$departmentKey] ?? ucfirst(str_replace('_', ' ', $departmentKey));
+                
+                foreach ($emails as $email) {
+                    $recipients[] = [
+                        'email' => $email,
+                        'department' => $departmentName
+                    ];
+                }
+            }
         }
+        
+        return array_unique($recipients, SORT_REGULAR);
     }
 
     /**

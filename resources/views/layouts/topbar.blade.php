@@ -28,8 +28,6 @@
                                     Feedback
                                 @elseif(request()->routeIs('feedback.analytics'))
                                     Analytics
-                                @elseif(request()->routeIs('feedback.kijabe.analytics'))
-                                    Hospital Analytics
                                 @elseif(request()->routeIs('feedback.learner.experience'))
                                     Learner Experience
                                 @elseif(request()->routeIs('profile.*'))

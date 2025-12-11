@@ -112,7 +112,10 @@ class FeedbackController extends Controller
         $analysisService = new FeedbackAnalysisService();
         $insights = $analysisService->getInsights();
         
-        return view('feedback.analytics', compact('insights'));
+        $resolutionService = new \App\Services\FeedbackResolutionService();
+        $resolutionMetrics = $resolutionService->getResolutionMetrics();
+        
+        return view('feedback.analytics', compact('insights', 'resolutionMetrics'));
     }
     
     /**
@@ -602,6 +605,34 @@ class FeedbackController extends Controller
     }
 
     /**
+     * Generate preview for bulk notifications
+     */
+    public function previewBulkNotifications(Request $request)
+    {
+        $request->validate([
+            'feedback_ids' => 'required|array',
+            'feedback_ids.*' => 'exists:feedback,id',
+            'departments' => 'required|array',
+            'departments.*' => 'string',
+            'custom_message' => 'nullable|string|max:1000',
+        ]);
+
+        $actionService = app(\App\Services\FeedbackActionService::class);
+        $recipients = $actionService->getNotificationRecipients(
+            $request->departments
+        );
+
+        $message = $request->custom_message ?? 'You have received new feedback that requires attention.';
+
+        return response()->json([
+            'success' => true,
+            'recipients' => $recipients,
+            'message' => $message,
+            'count' => count($recipients)
+        ]);
+    }
+
+    /**
      * Send bulk notifications to departments
      */
     public function sendBulkNotifications(Request $request)
@@ -679,5 +710,62 @@ class FeedbackController extends Controller
 
         return view('feedback.management', compact('feedbacks', 'departments', 'stats'));
     }
+    
+    /**
+     * Get resolution time for specific feedback
+     */
+    public function getResolutionTime(Feedback $feedback)
+    {
+        $resolutionService = new \App\Services\FeedbackResolutionService();
+        $resolutionData = $resolutionService->getResolutionTime($feedback);
+        
+        if (!$resolutionData) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This feedback does not require action'
+            ], 400);
+        }
+        
+        return response()->json([
+            'success' => true,
+            'is_resolved' => $resolutionData['resolved'],
+            'resolution_time' => $resolutionData['formatted'],
+            'hours' => $resolutionData['hours'],
+            'days' => $resolutionData['days']
+        ]);
+    }
+    
+    /**
+     * Mark feedback as resolved
+     */
+    public function markAsResolved(Request $request, Feedback $feedback)
+    {
+        if (!$feedback->action_required) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This feedback does not require action'
+            ], 400);
+        }
+        
+        if ($feedback->action_taken_at) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This feedback has already been resolved'
+            ], 400);
+        }
+        
+        $notes = $request->input('notes', 'Marked as resolved');
+        $feedback->markActionTaken($notes, [auth()->user()->email]);
+        
+        $resolutionService = new \App\Services\FeedbackResolutionService();
+        $resolutionData = $resolutionService->getResolutionTime($feedback);
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Feedback marked as resolved successfully',
+            'resolution_time' => $resolutionData['formatted']
+        ]);
+    }
 }
+
 

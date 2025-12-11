@@ -202,6 +202,20 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <div class="flex space-x-2">
+                                @if($feedback->action_required)
+                                    <button class="resolution-time-btn text-purple-600 hover:text-purple-900 p-2 rounded hover:bg-purple-50"
+                                            data-feedback-id="{{ $feedback->id }}"
+                                            title="View Resolution Time">
+                                        <i class="fas fa-clock"></i>
+                                    </button>
+                                    @if(!$feedback->action_taken_at)
+                                        <button class="mark-resolved-btn text-green-600 hover:text-green-900 p-2 rounded hover:bg-green-50"
+                                                data-feedback-id="{{ $feedback->id }}"
+                                                title="Mark as Resolved">
+                                            <i class="fas fa-check-circle"></i>
+                                        </button>
+                                    @endif
+                                @endif
                                 <a href="{{ route('feedback.show', $feedback) }}" 
                                    class="text-blue-600 hover:text-blue-900 p-2 rounded hover:bg-blue-50"
                                    title="View Details">
@@ -313,12 +327,164 @@
                             class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
                         Cancel
                     </button>
+                    <button type="button" id="preview-bulk-action" 
+                            class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                        Preview
+                    </button>
                     <button type="submit" 
                             class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
                         Send Notifications
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Notifications Preview Modal -->
+<div id="bulk-preview-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-10 mx-auto p-5 border w-full max-w-3xl shadow-lg rounded-md bg-white max-h-screen overflow-y-auto">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-medium text-gray-900">Review & Edit Notification</h3>
+                <button id="close-preview-modal" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <!-- Recipients Section - Editable -->
+            <div class="mb-6 pb-6 border-b border-gray-200">
+                <div class="flex items-center justify-between mb-3">
+                    <h4 class="text-sm font-semibold text-gray-900">Recipients</h4>
+                    <button type="button" id="toggle-edit-recipients" class="text-xs text-blue-600 hover:text-blue-800">
+                        <i class="fas fa-edit mr-1"></i>Edit
+                    </button>
+                </div>
+                
+                <!-- View Mode -->
+                <div id="recipients-view-mode" class="space-y-2 max-h-40 overflow-y-auto bg-gray-50 p-4 rounded-md">
+                    <p class="text-sm text-gray-500">Loading recipients...</p>
+                </div>
+                
+                <!-- Edit Mode -->
+                <div id="recipients-edit-mode" class="hidden space-y-2 max-h-40 overflow-y-auto bg-yellow-50 p-4 rounded-md border border-yellow-200">
+                    <div id="editable-recipients-list" class="space-y-2">
+                        <!-- Populated dynamically -->
+                    </div>
+                    <button type="button" id="add-recipient-btn" class="mt-3 px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700">
+                        <i class="fas fa-plus mr-1"></i>Add Recipient
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Message Section - Editable -->
+            <div class="mb-6">
+                <div class="flex items-center justify-between mb-3">
+                    <h4 class="text-sm font-semibold text-gray-900">Message</h4>
+                    <button type="button" id="toggle-edit-message" class="text-xs text-blue-600 hover:text-blue-800">
+                        <i class="fas fa-edit mr-1"></i>Edit
+                    </button>
+                </div>
+                
+                <!-- View Mode -->
+                <div id="message-view-mode" class="bg-gray-50 p-4 rounded-md border border-gray-200 min-h-32 max-h-48 overflow-y-auto text-sm text-gray-700 whitespace-pre-wrap">
+                    <p class="text-gray-500">Loading message...</p>
+                </div>
+                
+                <!-- Edit Mode -->
+                <div id="message-edit-mode" class="hidden">
+                    <textarea id="editable-message" rows="5" 
+                              class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              placeholder="Enter message..."></textarea>
+                </div>
+            </div>
+            
+            <!-- Confirmation Message -->
+            <div class="bg-yellow-50 border border-yellow-200 rounded-md p-4 mb-6">
+                <div class="flex items-start">
+                    <i class="fas fa-exclamation-triangle text-yellow-600 mr-3 mt-0.5"></i>
+                    <div>
+                        <p class="text-sm font-medium text-yellow-900">Please review carefully</p>
+                        <p class="text-sm text-yellow-700 mt-1">
+                            This notification will be sent to all selected recipients. You can edit the recipients and message before confirming.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="flex justify-end space-x-3">
+                <button type="button" id="back-from-preview" 
+                        class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                    Back
+                </button>
+                <button type="button" id="confirm-send" 
+                        class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
+                    Confirm & Send
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Resolution Time Modal -->
+<div id="resolution-time-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-medium text-gray-900">Resolution Time</h3>
+                <button id="close-resolution-time" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="mb-6">
+                <div id="resolution-status" class="text-lg mb-2"></div>
+                <div id="resolution-time-display" class="text-2xl font-bold text-gray-800"></div>
+            </div>
+            
+            <div class="flex justify-end">
+                <button id="close-resolution-time-btn" 
+                        onclick="document.getElementById('resolution-time-modal').classList.add('hidden')"
+                        class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Mark as Resolved Modal -->
+<div id="mark-resolved-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-medium text-gray-900">Mark as Resolved</h3>
+                <button id="close-mark-resolved" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <input type="hidden" id="mark-resolved-feedback-id">
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Resolution Notes (Optional)</label>
+                <textarea id="resolution-notes" rows="4" 
+                          class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                          placeholder="Add notes about how this was resolved..."></textarea>
+            </div>
+            
+            <div class="flex justify-end space-x-3">
+                <button type="button" 
+                        onclick="document.getElementById('mark-resolved-modal').classList.add('hidden'); document.getElementById('resolution-notes').value='';"
+                        class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                    Cancel
+                </button>
+                <button type="button" id="confirm-mark-resolved"
+                        class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+                    <i class="fas fa-check mr-1"></i> Confirm Resolution
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -444,37 +610,369 @@ window.addEventListener('load', function() {
     // Bulk notifications form
     const bulkForm = document.getElementById('bulk-notification-form');
     if (bulkForm) {
-        bulkForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const checkedFeedback = Array.from(document.querySelectorAll('.feedback-checkbox:checked'))
-                .map(cb => cb.value);
-            const selectedDepartments = Array.from(document.querySelectorAll('input[name="departments[]"]:checked'))
-                .map(cb => cb.value);
-            
-            if (selectedDepartments.length === 0) {
-                alert('Please select at least one department');
-                return;
-            }
-            
-            fetch('/feedback/bulk-notifications', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                },
-                body: JSON.stringify({
+        // Store form data for preview
+        let pendingBulkData = null;
+        let previewRecipients = [];
+        
+        // Preview button
+        const previewBtn = document.getElementById('preview-bulk-action');
+        if (previewBtn) {
+            previewBtn.addEventListener('click', async function(e) {
+                e.preventDefault();
+                
+                const checkedFeedback = Array.from(document.querySelectorAll('.feedback-checkbox:checked'))
+                    .map(cb => cb.value);
+                const selectedDepartments = Array.from(document.querySelectorAll('input[name="departments[]"]:checked'))
+                    .map(cb => cb.value);
+                const customMessage = document.querySelector('textarea[name="custom_message"]').value;
+                
+                if (selectedDepartments.length === 0) {
+                    alert('Please select at least one department');
+                    return;
+                }
+                
+                // Store for later confirmation
+                pendingBulkData = {
                     feedback_ids: checkedFeedback,
                     departments: selectedDepartments,
-                    custom_message: document.querySelector('textarea[name="custom_message"]').value
-                })
-            })
-            .then(r => r.json())
-            .then(data => {
-                alert(data.message);
-                location.reload();
-            })
-            .catch(e => alert('Error: ' + e));
+                    custom_message: customMessage
+                };
+                
+                // Fetch preview data
+                try {
+                    const response = await fetch('/feedback/bulk-notifications-preview', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        },
+                        body: JSON.stringify(pendingBulkData)
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        previewRecipients = data.recipients;
+                        
+                        // Populate preview view mode
+                        const recipientsList = document.getElementById('recipients-view-mode');
+                        recipientsList.innerHTML = previewRecipients.map(r => 
+                            `<div class="flex items-center justify-between p-2 bg-white border-l-2 border-blue-500 rounded">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-900">${r.email}</p>
+                                    <p class="text-xs text-gray-500">${r.department}</p>
+                                </div>
+                            </div>`
+                        ).join('');
+                        
+                        // Populate edit mode
+                        const editableList = document.getElementById('editable-recipients-list');
+                        editableList.innerHTML = previewRecipients.map((r, index) => 
+                            `<div class="flex items-center space-x-2 p-2 bg-white rounded border border-gray-300">
+                                <input type="text" class="flex-1 px-2 py-1 border border-gray-200 rounded text-sm" 
+                                       value="${r.email}" data-index="${index}" data-type="email">
+                                <span class="text-xs text-gray-500 px-2">${r.department}</span>
+                                <button type="button" class="remove-recipient-btn text-red-600 hover:text-red-800" data-index="${index}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>`
+                        ).join('');
+                        
+                        // Add event listeners to remove buttons
+                        document.querySelectorAll('.remove-recipient-btn').forEach(btn => {
+                            btn.addEventListener('click', function(e) {
+                                e.preventDefault();
+                                const index = this.getAttribute('data-index');
+                                previewRecipients.splice(index, 1);
+                                // Re-render
+                                previewBtn.click();
+                            });
+                        });
+                        
+                        // Populate message
+                        const message = data.message || customMessage || '(No custom message)';
+                        document.getElementById('message-view-mode').textContent = message;
+                        document.getElementById('editable-message').value = message;
+                        
+                        // Show preview modal, hide main modal
+                        document.getElementById('bulk-action-modal').classList.add('hidden');
+                        document.getElementById('bulk-preview-modal').classList.remove('hidden');
+                    } else {
+                        alert('Error generating preview: ' + (data.message || 'Unknown error'));
+                    }
+                } catch (error) {
+                    alert('Error: ' + error.message);
+                }
+            });
+        }
+        
+        // Toggle recipient edit mode
+        const toggleEditRecipients = document.getElementById('toggle-edit-recipients');
+        if (toggleEditRecipients) {
+            toggleEditRecipients.addEventListener('click', function(e) {
+                e.preventDefault();
+                const viewMode = document.getElementById('recipients-view-mode');
+                const editMode = document.getElementById('recipients-edit-mode');
+                
+                if (editMode.classList.contains('hidden')) {
+                    viewMode.classList.add('hidden');
+                    editMode.classList.remove('hidden');
+                    this.innerHTML = '<i class="fas fa-eye mr-1"></i>View';
+                } else {
+                    viewMode.classList.remove('hidden');
+                    editMode.classList.add('hidden');
+                    this.innerHTML = '<i class="fas fa-edit mr-1"></i>Edit';
+                }
+            });
+        }
+        
+        // Toggle message edit mode
+        const toggleEditMessage = document.getElementById('toggle-edit-message');
+        if (toggleEditMessage) {
+            toggleEditMessage.addEventListener('click', function(e) {
+                e.preventDefault();
+                const viewMode = document.getElementById('message-view-mode');
+                const editMode = document.getElementById('message-edit-mode');
+                
+                if (editMode.classList.contains('hidden')) {
+                    viewMode.classList.add('hidden');
+                    editMode.classList.remove('hidden');
+                    this.innerHTML = '<i class="fas fa-eye mr-1"></i>View';
+                } else {
+                    // Update view with edited content
+                    const editedMessage = document.getElementById('editable-message').value;
+                    viewMode.textContent = editedMessage;
+                    viewMode.classList.remove('hidden');
+                    editMode.classList.add('hidden');
+                    this.innerHTML = '<i class="fas fa-edit mr-1"></i>Edit';
+                }
+            });
+        }
+        
+        // Add recipient button
+        const addRecipientBtn = document.getElementById('add-recipient-btn');
+        if (addRecipientBtn) {
+            addRecipientBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                previewRecipients.push({ email: '', department: 'Custom' });
+                
+                const editableList = document.getElementById('editable-recipients-list');
+                const newRow = document.createElement('div');
+                newRow.className = 'flex items-center space-x-2 p-2 bg-white rounded border border-gray-300';
+                newRow.innerHTML = `
+                    <input type="text" class="flex-1 px-2 py-1 border border-gray-200 rounded text-sm" 
+                           placeholder="Enter email address" data-type="email">
+                    <span class="text-xs text-gray-500 px-2">Custom</span>
+                    <button type="button" class="remove-recipient-btn text-red-600 hover:text-red-800" data-index="${previewRecipients.length - 1}">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                `;
+                editableList.appendChild(newRow);
+                
+                // Add event listener to new remove button
+                newRow.querySelector('.remove-recipient-btn').addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const index = this.getAttribute('data-index');
+                    previewRecipients.splice(index, 1);
+                    newRow.remove();
+                });
+            });
+        }
+        
+        // Confirm and send
+        const confirmSendBtn = document.getElementById('confirm-send');
+        if (confirmSendBtn) {
+            confirmSendBtn.addEventListener('click', async function() {
+                // Collect any edited recipients
+                const editedEmails = Array.from(document.querySelectorAll('[data-type="email"]'))
+                    .map(input => input.value.trim())
+                    .filter(email => email.length > 0);
+                
+                // Collect edited message
+                const editMode = document.getElementById('message-edit-mode');
+                let finalMessage = pendingBulkData.custom_message;
+                if (!editMode.classList.contains('hidden')) {
+                    finalMessage = document.getElementById('editable-message').value;
+                }
+                
+                // Update pending data with edits
+                pendingBulkData.custom_message = finalMessage;
+                
+                // If user edited recipients, update the data
+                if (editedEmails.length > 0) {
+                    // Store edited emails for sending
+                    pendingBulkData.custom_recipients = editedEmails;
+                }
+                
+                if (!pendingBulkData) {
+                    alert('No data to send');
+                    return;
+                }
+                
+                confirmSendBtn.disabled = true;
+                confirmSendBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Sending...';
+                
+                try {
+                    const response = await fetch('/feedback/bulk-notifications', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        },
+                        body: JSON.stringify(pendingBulkData)
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.message) {
+                        alert(data.message);
+                        document.getElementById('bulk-preview-modal').classList.add('hidden');
+                        document.getElementById('bulk-action-modal').classList.add('hidden');
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1500);
+                    }
+                } catch (error) {
+                    alert('Error: ' + error.message);
+                    confirmSendBtn.disabled = false;
+                    confirmSendBtn.innerHTML = '<i class="fas fa-check mr-2"></i>Confirm & Send';
+                }
+            });
+        }
+        
+        // Back button from preview
+        const backFromPreview = document.getElementById('back-from-preview');
+        if (backFromPreview) {
+            backFromPreview.addEventListener('click', function() {
+                document.getElementById('bulk-preview-modal').classList.add('hidden');
+                document.getElementById('bulk-action-modal').classList.remove('hidden');
+            });
+        }
+        
+        // Close preview modal
+        const closePreviewModal = document.getElementById('close-preview-modal');
+        if (closePreviewModal) {
+            closePreviewModal.addEventListener('click', function() {
+                document.getElementById('bulk-preview-modal').classList.add('hidden');
+                document.getElementById('bulk-action-modal').classList.remove('hidden');
+            });
+        }
+        
+        // Original form submission (kept for backward compatibility)
+        bulkForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            // Form submission is now handled through preview flow
+            document.getElementById('preview-bulk-action').click();
+        });
+    }
+    
+    // Helper function to escape HTML
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    // Resolution Time handlers
+    const resolutionTimeBtns = document.querySelectorAll('.resolution-time-btn');
+    resolutionTimeBtns.forEach(btn => {
+        btn.addEventListener('click', async function() {
+            const feedbackId = this.dataset.feedbackId;
+            
+            try {
+                const response = await fetch(`/feedback/${feedbackId}/resolution-time`, {
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Display resolution time in modal
+                    const modal = document.getElementById('resolution-time-modal');
+                    const statusEl = document.getElementById('resolution-status');
+                    const timeEl = document.getElementById('resolution-time-display');
+                    
+                    if (data.is_resolved) {
+                        statusEl.innerHTML = `<span class="text-green-600 font-semibold">✓ Resolved</span>`;
+                        statusEl.className = 'text-lg mb-2 text-green-600';
+                        timeEl.textContent = `Resolution Time: ${data.resolution_time}`;
+                    } else {
+                        statusEl.innerHTML = `<span class="text-orange-600 font-semibold">⏳ Pending</span>`;
+                        statusEl.className = 'text-lg mb-2 text-orange-600';
+                        timeEl.textContent = `Time Elapsed: ${data.resolution_time}`;
+                    }
+                    
+                    modal.classList.remove('hidden');
+                } else {
+                    alert('Error fetching resolution time');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to fetch resolution time');
+            }
+        });
+    });
+    
+    // Mark as Resolved handlers
+    const markResolvedBtns = document.querySelectorAll('.mark-resolved-btn');
+    markResolvedBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const feedbackId = this.dataset.feedbackId;
+            document.getElementById('mark-resolved-feedback-id').value = feedbackId;
+            document.getElementById('mark-resolved-modal').classList.remove('hidden');
+        });
+    });
+    
+    // Confirm mark resolved
+    const confirmMarkResolved = document.getElementById('confirm-mark-resolved');
+    if (confirmMarkResolved) {
+        confirmMarkResolved.addEventListener('click', async function() {
+            const feedbackId = document.getElementById('mark-resolved-feedback-id').value;
+            const notes = document.getElementById('resolution-notes').value;
+            
+            try {
+                const response = await fetch(`/feedback/${feedbackId}/mark-resolved`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({ notes })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Show success message with resolution time
+                    alert(`Feedback marked as resolved!\nResolution Time: ${data.resolution_time}`);
+                    document.getElementById('mark-resolved-modal').classList.add('hidden');
+                    location.reload();
+                } else {
+                    alert('Error marking feedback as resolved');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to mark feedback as resolved');
+            }
+        });
+    }
+    
+    // Close resolution time modal
+    const closeResolutionTime = document.getElementById('close-resolution-time');
+    if (closeResolutionTime) {
+        closeResolutionTime.addEventListener('click', function() {
+            document.getElementById('resolution-time-modal').classList.add('hidden');
+        });
+    }
+    
+    // Close mark resolved modal
+    const closeMarkResolved = document.getElementById('close-mark-resolved');
+    if (closeMarkResolved) {
+        closeMarkResolved.addEventListener('click', function() {
+            document.getElementById('mark-resolved-modal').classList.add('hidden');
+            document.getElementById('resolution-notes').value = '';
         });
     }
     

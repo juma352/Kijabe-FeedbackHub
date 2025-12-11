@@ -7,9 +7,15 @@
 
     <div class="max-w-7xl mx-auto">
         <div class="bg-white shadow-sm rounded-lg">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h3 class="text-lg font-semibold text-gray-900">Department Contacts</h3>
-                <p class="text-sm text-gray-600 mt-1">Manage department heads and notification recipients</p>
+            <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900">Department Contacts</h3>
+                    <p class="text-sm text-gray-600 mt-1">Manage department heads and notification recipients</p>
+                </div>
+                <button onclick="openAddDepartmentModal()" 
+                        class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm font-medium">
+                    <i class="fas fa-plus mr-2"></i> Add Department
+                </button>
             </div>
 
             <div class="p-6">
@@ -117,6 +123,71 @@
             </div>
         </div>
     </div>
+
+    <!-- Add Department Modal -->
+    <div id="add-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-medium text-gray-900">Add New Department</h3>
+                    <button onclick="closeAddModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <form id="add-form">
+                    @csrf
+                    <div class="space-y-4">
+                        <div>
+                            <label for="add-dept-name" class="block text-sm font-medium text-gray-700">Department Name</label>
+                            <input type="text" id="add-dept-name" name="department_name" required
+                                   class="mt-1 block w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                                   placeholder="e.g., Pediatrics">
+                        </div>
+                        
+                        <div>
+                            <label for="add-head-name" class="block text-sm font-medium text-gray-700">Department Head Name</label>
+                            <input type="text" id="add-head-name" name="head_name" required
+                                   class="mt-1 block w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                                   placeholder="Head of department">
+                        </div>
+                        
+                        <div>
+                            <label for="add-head-email" class="block text-sm font-medium text-gray-700">Head Email</label>
+                            <input type="email" id="add-head-email" name="head_email" required
+                                   class="mt-1 block w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                                   placeholder="head@example.com">
+                        </div>
+                        
+                        <div>
+                            <label for="add-cc-emails" class="block text-sm font-medium text-gray-700">CC Emails (Optional)</label>
+                            <textarea id="add-cc-emails" name="cc_emails" rows="2"
+                                      class="mt-1 block w-full rounded-md border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                                      placeholder="email1@example.com, email2@example.com"></textarea>
+                            <p class="text-xs text-gray-500 mt-1">Additional recipients who will receive notifications</p>
+                        </div>
+                        
+                        <div class="flex items-center">
+                            <input type="checkbox" name="is_active" id="add-is-active" value="1" checked
+                                   class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                            <label class="ml-2 text-sm text-gray-700">Active (receives notifications)</label>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3 mt-6">
+                        <button type="button" onclick="closeAddModal()" 
+                                class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                            Cancel
+                        </button>
+                        <button type="submit" 
+                                class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+                            <i class="fas fa-plus mr-1"></i> Add Department
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 </x-app-layout>
 
 <script>
@@ -139,6 +210,50 @@ function editDepartment(id) {
 function closeModal() {
     document.getElementById('edit-modal').classList.add('hidden');
 }
+
+function openAddDepartmentModal() {
+    document.getElementById('add-form').reset();
+    document.getElementById('add-is-active').checked = true;
+    document.getElementById('add-modal').classList.remove('hidden');
+}
+
+function closeAddModal() {
+    document.getElementById('add-modal').classList.add('hidden');
+}
+
+document.getElementById('add-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = {
+        department_name: document.getElementById('add-dept-name').value,
+        head_name: document.getElementById('add-head-name').value,
+        head_email: document.getElementById('add-head-email').value,
+        cc_emails: document.getElementById('add-cc-emails').value,
+        is_active: document.getElementById('add-is-active').checked ? 1 : 0,
+    };
+    
+    fetch('/departments', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert(data.message || 'Failed to add department');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to add department');
+    });
+});
 
 document.getElementById('edit-form').addEventListener('submit', function(e) {
     e.preventDefault();
@@ -174,6 +289,13 @@ document.getElementById('edit-form').addEventListener('submit', function(e) {
 document.getElementById('edit-modal').addEventListener('click', function(e) {
     if (e.target === this) {
         closeModal();
+    }
+});
+
+// Close add modal when clicking outside
+document.getElementById('add-modal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeAddModal();
     }
 });
 </script>

@@ -17,6 +17,28 @@ class DepartmentHeadController extends Controller
     }
 
     /**
+     * Store a new department head
+     */
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'department_name' => 'required|string|max:255|unique:department_heads',
+            'head_name' => 'required|string|max:255',
+            'head_email' => 'required|email|max:255',
+            'cc_emails' => 'nullable|string',
+            'is_active' => 'boolean',
+        ]);
+
+        $department = DepartmentHead::create($validated);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Department added successfully',
+            'department' => $department
+        ]);
+    }
+
+    /**
      * Update department head information
      */
     public function update(Request $request, DepartmentHead $departmentHead)

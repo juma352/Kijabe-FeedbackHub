@@ -36,14 +36,6 @@
             </li>
 
             <li>
-                <a href="{{ route('feedback.kijabe.analytics') }}" 
-                   class="flex items-center px-4 py-3 rounded-lg transition-colors duration-200 {{ request()->routeIs('feedback.kijabe.analytics') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white' }}">
-                    <i class="fas fa-hospital w-5 mr-3"></i>
-                    <span>Hospital Analytics</span>
-                </a>
-            </li>
-
-            <li>
                 <a href="{{ route('feedback.learner.experience') }}" 
                    class="flex items-center px-4 py-3 rounded-lg transition-colors duration-200 {{ request()->routeIs('feedback.learner.experience') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white' }}">
                     <i class="fas fa-graduation-cap w-5 mr-3"></i>
@@ -196,7 +188,7 @@
                     
                     <li>
                         <a href="{{ route('feedback.index') }}" @click="open = false"
-                           class="flex items-center px-4 py-3 rounded-lg transition-colors duration-200 {{ request()->routeIs('feedback.*') && !request()->routeIs('feedback.analytics') && !request()->routeIs('feedback.kijabe.analytics') && !request()->routeIs('feedback.learner.experience') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white' }}">
+                           class="flex items-center px-4 py-3 rounded-lg transition-colors duration-200 {{ request()->routeIs('feedback.*') && !request()->routeIs('feedback.analytics') && !request()->routeIs('feedback.learner.experience') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white' }}">
                             <i class="fas fa-comments w-5 mr-3"></i>
                             <span>Feedback</span>
                         </a>
@@ -207,14 +199,6 @@
                            class="flex items-center px-4 py-3 rounded-lg transition-colors duration-200 {{ request()->routeIs('feedback.analytics') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white' }}">
                             <i class="fas fa-chart-bar w-5 mr-3"></i>
                             <span>Analytics</span>
-                        </a>
-                    </li>
-
-                    <li>
-                        <a href="{{ route('feedback.kijabe.analytics') }}" @click="open = false"
-                           class="flex items-center px-4 py-3 rounded-lg transition-colors duration-200 {{ request()->routeIs('feedback.kijabe.analytics') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white' }}">
-                            <i class="fas fa-hospital w-5 mr-3"></i>
-                            <span>Hospital Analytics</span>
                         </a>
                     </li>
 
